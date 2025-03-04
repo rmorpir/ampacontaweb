@@ -1,0 +1,6 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Simple placeholder logo -->
+    <rect x="40" y="40" width="120" height="120" fill="#1f77b4" rx="20"/>
+    <text x="100" y="110" font-family="Arial" font-size="24" fill="white" text-anchor="middle">AMPA</text>
+    <text x="100" y="140" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Sagrada Familia</text>
+</svg>
