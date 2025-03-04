@@ -159,7 +159,8 @@ class DriveManager:
                     file_metadata = self.service.files().get(fileId=self.shared_folder_id, fields='mimeType').execute()
                     is_folder = file_metadata.get('mimeType') == 'application/vnd.google-apps.folder'
                     print(f"   ¿El ID corresponde a una carpeta? {'Sí' if is_folder else 'No'}")
-
+                except Exception as folder_error:
+                    print(f"   No se pudo verificar el ID de la carpeta: {str(folder_error)}")
 
     def list_available_folders(self):
         """Listar carpetas disponibles en Google Drive para ayudar a identificar el ID correcto"""
@@ -185,6 +186,3 @@ class DriveManager:
         except Exception as e:
             print(f"Error al listar carpetas en Drive: {str(e)}")
             return []
-
-                except Exception as folder_error:
-                    print(f"   No se pudo verificar el ID de la carpeta: {str(folder_error)}")
