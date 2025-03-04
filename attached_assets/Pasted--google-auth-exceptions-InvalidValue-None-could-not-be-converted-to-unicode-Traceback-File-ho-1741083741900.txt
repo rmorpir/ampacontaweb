@@ -1,0 +1,31 @@
+
+google.auth.exceptions.InvalidValue: None could not be converted to unicode
+Traceback:
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/exec_code.py", line 121, in exec_func_with_error_handling
+    result = func()
+             ^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/streamlit/runtime/scriptrunner/script_runner.py", line 591, in code_to_exec
+    exec(code, module.__dict__)
+File "/home/runner/workspace/main.py", line 19, in <module>
+    drive_manager = DriveManager()
+                    ^^^^^^^^^^^^^^
+File "/home/runner/workspace/app/drive_manager.py", line 13, in __init__
+    self.credentials = self._get_credentials()
+                       ^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/app/drive_manager.py", line 18, in _get_credentials
+    return service_account.Credentials.from_service_account_info({
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/google/oauth2/service_account.py", line 243, in from_service_account_info
+    signer = _service_account_info.from_dict(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/google/auth/_service_account_info.py", line 57, in from_dict
+    signer = crypt.RSASigner.from_service_account_info(data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/google/auth/crypt/base.py", line 109, in from_service_account_info
+    return cls.from_string(
+           ^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/google/auth/crypt/_python_rsa.py", line 155, in from_string
+    key = _helpers.from_bytes(key)  # PEM expects str in Python 3
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/google/auth/_helpers.py", line 156, in from_bytes
+    raise exceptions.InvalidValue(
