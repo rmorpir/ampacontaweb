@@ -39,7 +39,7 @@ class FinancialManager:
             'description': [description]
         })
         self.transactions = pd.concat([self.transactions, new_transaction], ignore_index=True)
-        self.save_data()
+        self.save_data()a()
 
     def get_balance(self):
         total_income = self.transactions[self.transactions['type'] == 'income']['amount'].sum()
