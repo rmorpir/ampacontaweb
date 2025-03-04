@@ -43,10 +43,10 @@ def login():
             # Compare the password directly without hashing the stored password
             if username == stored_user and password == stored_pass:
                 st.session_state.authenticated = True
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error("Usuario o contraseña incorrectos")
 
 def logout():
     st.session_state.authenticated = False
-    st.experimental_rerun()
+    st.rerun()
