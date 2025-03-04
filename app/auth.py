@@ -21,18 +21,14 @@ def login():
     """, unsafe_allow_html=True)
 
     with st.container():
-        st.image("assets/ampa_logo.svg", width=200)
+        st.image("attached_assets/LogoAMPA.png", width=200)
         st.title("AMPA Sagrada Familia Badajoz")
-        
+
         username = st.text_input("Usuario")
         password = st.text_input("Contraseña", type="password")
-        
-        # In production, use environment variables or secure storage
-        ADMIN_USER = os.getenv("ADMIN_USER", "admin")
-        ADMIN_PASS = os.getenv("ADMIN_PASS", get_password_hash("admin123"))
-        
+
         if st.button("Iniciar Sesión"):
-            if username == ADMIN_USER and get_password_hash(password) == ADMIN_PASS:
+            if username == os.getenv("ADMIN_USER") and get_password_hash(password) == os.getenv("ADMIN_PASS"):
                 st.session_state.authenticated = True
                 st.experimental_rerun()
             else:
