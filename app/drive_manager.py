@@ -9,9 +9,7 @@ import os
 class DriveManager:
     def __init__(self):
         # Nota: Este es el ID de la carpeta donde se guardarán los archivos
-        # El ID anterior (1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23) parece ser un archivo, no una carpeta
-        # Debes usar el ID de la carpeta en Google Drive
-        self.shared_folder_id = "root"  # Usar "root" temporalmente o reemplazar con el ID correcto de la carpeta
+        self.shared_folder_id = "127a8D2rw4SbucDdu-msPBQLlKWvraZZf"  # ID de la carpeta APP CONTABILIDAD AMPA
         self.local_data_dir = "data"
 
         try:
@@ -167,13 +165,13 @@ class DriveManager:
         if not self.service:
             print("No hay conexión a Google Drive.")
             return []
-        
+
         try:
             results = self.service.files().list(
                 q="mimeType='application/vnd.google-apps.folder' and trashed=false",
                 fields="files(id, name)"
             ).execute()
-            
+
             folders = results.get('files', [])
             if folders:
                 print("Carpetas disponibles en Google Drive:")
@@ -181,7 +179,7 @@ class DriveManager:
                     print(f"  - Nombre: {folder['name']}, ID: {folder['id']}")
             else:
                 print("No se encontraron carpetas en Google Drive.")
-            
+
             return folders
         except Exception as e:
             print(f"Error al listar carpetas en Drive: {str(e)}")
