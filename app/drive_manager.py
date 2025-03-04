@@ -8,91 +8,142 @@ import os
 
 class DriveManager:
     def __init__(self):
-        self.SCOPES = ['https://www.googleapis.com/auth/drive.file']
-        self.FOLDER_ID = "1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23"
-        self.credentials = self._get_credentials()
-        self.use_local_storage = self.credentials is None
-        
-        if not self.use_local_storage:
+        self.shared_folder_id = "1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23"  # ID de la carpeta compartida
+        self.local_data_dir = "data"
+
+        try:
+            self.credentials = self._get_credentials()
             self.service = build('drive', 'v3', credentials=self.credentials)
-        else:
-            # Create a local data directory if it doesn't exist
-            if not os.path.exists('data'):
-                os.makedirs('data')
+            print("Google Drive connection established")
+        except Exception as e:
+            print(f"WARNING: Google Drive credentials not found. Using local storage mode. Error: {str(e)}")
+            self.service = None
+
+        # Ensure local data directory exists
+        if not os.path.exists(self.local_data_dir):
+            os.makedirs(self.local_data_dir)
 
     def _get_credentials(self):
-        # Check if Google credentials are set
-        if not os.getenv("GOOGLE_PRIVATE_KEY"):
-            print("WARNING: Google Drive credentials not found. Using local storage mode.")
-            return None
-            
-        # In production, use environment variables for credentials
-        try:
-            return service_account.Credentials.from_service_account_info({
+        # Check for environment variables first
+        if all(os.getenv(key) for key in [
+            "GCP_PROJECT_ID", "GCP_PRIVATE_KEY_ID", "GCP_PRIVATE_KEY", 
+            "GCP_CLIENT_EMAIL", "GCP_CLIENT_ID", "GCP_CLIENT_X509_CERT_URL"
+        ]):
+            service_account_info = {
                 "type": "service_account",
-                "project_id": os.getenv("GOOGLE_PROJECT_ID"),
-                "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
-                "private_key": os.getenv("GOOGLE_PRIVATE_KEY"),
-                "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
-                "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+                "project_id": os.getenv("GCP_PROJECT_ID"),
+                "private_key_id": os.getenv("GCP_PRIVATE_KEY_ID"),
+                "private_key": os.getenv("GCP_PRIVATE_KEY").replace('\\n', '\n'),
+                "client_email": os.getenv("GCP_CLIENT_EMAIL"),
+                "client_id": os.getenv("GCP_CLIENT_ID"),
                 "auth_uri": "https://accounts.google.com/o/oauth2/auth",
                 "token_uri": "https://oauth2.googleapis.com/token",
                 "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-                "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_CERT_URL")
-            }, scopes=self.SCOPES)
-        except Exception as e:
-            print(f"ERROR: Failed to initialize Google Drive credentials: {e}")
+                "client_x509_cert_url": os.getenv("GCP_CLIENT_X509_CERT_URL")
+            }
+
+            return service_account.Credentials.from_service_account_info(service_account_info)
+        else:
+            raise ValueError("Missing required service account values in environment variables")
+
+    def _find_file_in_drive(self, file_name):
+        """Find a file in the shared folder by name"""
+        if not self.service:
             return None
 
-    def save_data(self, data, filename):
-        df = pd.DataFrame(data)
-        
-        if self.use_local_storage:
-            # Save to local file
-            local_path = os.path.join('data', filename)
-            df.to_csv(local_path, index=False)
-            return
-        
-        # Use Google Drive
-        buffer = io.BytesIO()
-        df.to_csv(buffer, index=False)
-        buffer.seek(0)
-        
-        file_metadata = {
-            'name': filename,
-            'parents': [self.FOLDER_ID]
-        }
-        media = MediaIoBaseUpload(buffer, mimetype='text/csv', resumable=True)
-        self.service.files().create(body=file_metadata, media_body=media).execute()
-
-    def load_data(self, filename):
-        if self.use_local_storage:
-            # Load from local file
-            local_path = os.path.join('data', filename)
-            if not os.path.exists(local_path):
-                return pd.DataFrame()
-            return pd.read_csv(local_path)
-        
-        # Use Google Drive
         try:
             results = self.service.files().list(
-                q=f"name='{filename}' and '{self.FOLDER_ID}' in parents",
-                fields="files(id, name)").execute()
+                q=f"name='{file_name}' and '{self.shared_folder_id}' in parents and trashed=false",
+                fields="files(id, name)"
+            ).execute()
+
             files = results.get('files', [])
-            
-            if not files:
-                return pd.DataFrame()
-                
-            file_id = files[0]['id']
-            request = self.service.files().get_media(fileId=file_id)
-            buffer = io.BytesIO()
-            downloader = MediaIoBaseDownload(buffer, request)
-            done = False
-            while done is False:
-                status, done = downloader.next_chunk()
-            
-            buffer.seek(0)
-            return pd.read_csv(buffer)
+            if files:
+                return files[0]
+            return None
         except Exception as e:
-            print(f"Error loading data from Google Drive: {e}")
+            print(f"Error finding file in Drive: {str(e)}")
+            return None
+
+    def load_data(self, file_name):
+        """Load data from Google Drive or local storage"""
+        local_path = os.path.join(self.local_data_dir, file_name)
+
+        try:
+            if self.service:
+                # Try to load from Google Drive
+                file_metadata = self._find_file_in_drive(file_name)
+
+                if file_metadata:
+                    file_id = file_metadata['id']
+                    request = self.service.files().get_media(fileId=file_id)
+
+                    file_content = io.BytesIO()
+                    downloader = MediaIoBaseDownload(file_content, request)
+                    done = False
+
+                    while not done:
+                        status, done = downloader.next_chunk()
+
+                    file_content.seek(0)
+                    # Save a local copy for backup
+                    with open(local_path, 'wb') as f:
+                        f.write(file_content.getvalue())
+
+                    return pd.read_csv(io.StringIO(file_content.getvalue().decode('utf-8')))
+                else:
+                    print(f"File {file_name} not found in Drive. Using local file if available.")
+        except Exception as e:
+            print(f"Error loading from Drive: {str(e)}. Using local storage.")
+
+        # Fallback to local storage
+        if os.path.exists(local_path):
+            return pd.read_csv(local_path)
+        else:
             return pd.DataFrame()
+
+    def save_data(self, data, file_name):
+        """Save data to Google Drive and local storage"""
+        local_path = os.path.join(self.local_data_dir, file_name)
+
+        # Convert to DataFrame if it's not already
+        df = pd.DataFrame(data) if not isinstance(data, pd.DataFrame) else data
+
+        # Always save locally as backup
+        df.to_csv(local_path, index=False)
+
+        if self.service:
+            try:
+                # Convert DataFrame to CSV content
+                csv_content = df.to_csv(index=False).encode('utf-8')
+
+                # Check if file already exists in Drive
+                file_metadata = self._find_file_in_drive(file_name)
+
+                media = MediaIoBaseUpload(
+                    io.BytesIO(csv_content),
+                    mimetype='text/csv',
+                    resumable=True
+                )
+
+                if file_metadata:
+                    # Update existing file
+                    self.service.files().update(
+                        fileId=file_metadata['id'],
+                        media_body=media
+                    ).execute()
+                else:
+                    # Create new file in the shared folder
+                    file_metadata = {
+                        'name': file_name,
+                        'parents': [self.shared_folder_id]
+                    }
+                    self.service.files().create(
+                        body=file_metadata,
+                        media_body=media,
+                        fields='id'
+                    ).execute()
+
+                print(f"Successfully saved {file_name} to Google Drive")
+            except Exception as e:
+                print(f"Error saving to Drive: {str(e)}. Data saved locally only.")

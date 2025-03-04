@@ -19,6 +19,12 @@ else:
     drive_manager = DriveManager()
     financial_manager = FinancialManager(drive_manager)
     pdf_generator = PDFGenerator()
+    
+    # Show storage status
+    if drive_manager.service:
+        st.sidebar.success("✅ Conectado a Google Drive")
+    else:
+        st.sidebar.warning("⚠️ Usando almacenamiento local (sin conexión a Google Drive)")
 
     # Sidebar
     st.sidebar.image("attached_assets/LogoAMPA.png", width=200)
@@ -114,18 +120,50 @@ else:
 
     elif selected_option == "Generar Informe":
         st.title("Generar Informe")
-
+        
+        # Date range selection
+        col1, col2 = st.columns(2)
+        with col1:
+            start_date = st.date_input(
+                "Fecha inicial", 
+                value=datetime.now().replace(day=1),  # First day of current month
+                format="DD/MM/YYYY"
+            )
+        with col2:
+            end_date = st.date_input(
+                "Fecha final", 
+                value=datetime.now(),
+                format="DD/MM/YYYY"
+            )
+            
+        # Format dates for filtering
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        
+        # Option to include all transactions
+        include_all = st.checkbox("Incluir todas las transacciones (ignorar rango de fechas)")
+        
         if st.button("Generar PDF"):
+            if include_all:
+                start_date_str = None
+                end_date_str = None
+                
             pdf_buffer = pdf_generator.generate_report(
                 financial_manager.transactions,
                 financial_manager.initial_balance,
-                financial_manager.get_balance()
+                financial_manager.get_balance(),
+                start_date_str,
+                end_date_str
             )
 
+            report_filename = f"informe_ampa_{datetime.now().strftime('%Y%m%d')}"
+            if not include_all:
+                report_filename += f"_{start_date.strftime('%Y%m%d')}-{end_date.strftime('%Y%m%d')}"
+                
             st.download_button(
                 label="Descargar Informe",
                 data=pdf_buffer.getvalue(),
-                file_name=f"informe_ampa_{datetime.now().strftime('%Y%m%d')}.pdf",
+                file_name=f"{report_filename}.pdf",
                 mime="application/pdf"
             )
     
