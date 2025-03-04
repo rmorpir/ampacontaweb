@@ -1,6 +1,25 @@
 <svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-    <!-- Simple placeholder logo -->
-    <rect x="40" y="40" width="120" height="120" fill="#1f77b4" rx="20"/>
-    <text x="100" y="110" font-family="Arial" font-size="24" fill="white" text-anchor="middle">AMPA</text>
-    <text x="100" y="140" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Sagrada Familia</text>
+    <!-- Fondo circular -->
+    <circle cx="100" cy="100" r="90" fill="#1f77b4"/>
+
+    <!-- Libro abierto -->
+    <path d="M 60,80 C 60,65 140,65 140,80 L 140,120 C 140,105 60,105 60,120 Z" 
+          fill="white" stroke="#1f77b4" stroke-width="2"/>
+    <path d="M 100,80 L 100,120" stroke="#1f77b4" stroke-width="2"/>
+
+    <!-- Texto AMPA -->
+    <text x="100" y="95" 
+          font-family="Arial Black" font-size="24" 
+          fill="#1f77b4" text-anchor="middle" 
+          font-weight="bold">AMPA</text>
+
+    <!-- Texto Sagrada Familia -->
+    <text x="100" y="140" 
+          font-family="Arial" font-size="14" 
+          fill="white" text-anchor="middle">Sagrada Familia</text>
+
+    <!-- Texto Badajoz -->
+    <text x="100" y="160" 
+          font-family="Arial" font-size="12" 
+          fill="white" text-anchor="middle">Badajoz</text>
 </svg>
