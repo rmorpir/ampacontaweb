@@ -144,6 +144,7 @@ class DriveManager:
                         fields='id'
                     ).execute()
 
-                print(f"Successfully saved {file_name} to Google Drive")
+                print(f"✅ Archivo {file_name} guardado correctamente en Google Drive (Carpeta ID: {self.shared_folder_id})")
+                print(f"   También se ha guardado localmente en: {local_path}")
             except Exception as e:
-                print(f"Error saving to Drive: {str(e)}. Data saved locally only.")
+                print(f"❌ Error al guardar en Google Drive: {str(e)}. Datos guardados localmente en: {local_path}")

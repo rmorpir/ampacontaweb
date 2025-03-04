@@ -47,6 +47,24 @@ class FinancialManager:
         })
         self.transactions = pd.concat([self.transactions, new_transaction], ignore_index=True)
         self.save_data()
+        
+    def update_transaction(self, index, transaction_type, category, amount, description, date):
+        if index >= 0 and index < len(self.transactions):
+            self.transactions.at[index, 'date'] = date
+            self.transactions.at[index, 'type'] = transaction_type
+            self.transactions.at[index, 'category'] = category
+            self.transactions.at[index, 'amount'] = amount
+            self.transactions.at[index, 'description'] = description
+            self.save_data()
+            return True
+        return False
+        
+    def delete_transaction(self, index):
+        if index >= 0 and index < len(self.transactions):
+            self.transactions = self.transactions.drop(index).reset_index(drop=True)
+            self.save_data()
+            return True
+        return False
 
     def get_balance(self):
         total_income = self.transactions[self.transactions['type'] == 'income']['amount'].sum()

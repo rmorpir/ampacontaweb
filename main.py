@@ -114,7 +114,90 @@ else:
             
         # Mostrar datos con formato
         if not filtered_data.empty:
-            st.dataframe(filtered_data.sort_values(by='date', ascending=False))
+            # Agregar una columna de índices para seleccionar transacciones
+            filtered_data_with_index = filtered_data.reset_index().rename(columns={'index': 'original_index'})
+            selected_row = st.dataframe(filtered_data_with_index.sort_values(by='date', ascending=False))
+            
+            # Opciones para editar o eliminar
+            st.subheader("Editar o Eliminar Movimiento")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                selected_index = st.number_input("ID del movimiento a modificar", 
+                                               min_value=-1, 
+                                               max_value=len(financial_manager.transactions)-1, 
+                                               value=-1,
+                                               step=1)
+            
+            if selected_index >= 0:
+                # Mostrar formulario de edición
+                trans = financial_manager.transactions.iloc[selected_index]
+                
+                transaction_type = st.radio("Tipo de Movimiento", 
+                                          ["Ingreso", "Gasto"], 
+                                          index=0 if trans['type'] == 'income' else 1)
+                
+                categories = (financial_manager.INCOME_CATEGORIES 
+                             if transaction_type == "Ingreso" 
+                             else financial_manager.EXPENSE_CATEGORIES)
+                
+                cat_index = 0
+                try:
+                    if transaction_type == "Ingreso" and trans['category'] in financial_manager.INCOME_CATEGORIES:
+                        cat_index = financial_manager.INCOME_CATEGORIES.index(trans['category'])
+                    elif transaction_type == "Gasto" and trans['category'] in financial_manager.EXPENSE_CATEGORIES:
+                        cat_index = financial_manager.EXPENSE_CATEGORIES.index(trans['category'])
+                except ValueError:
+                    cat_index = 0
+                
+                category = st.selectbox("Categoría", categories, index=cat_index)
+                
+                amount = st.number_input("Cantidad (€)", 
+                                        min_value=0.0, 
+                                        value=float(trans['amount']), 
+                                        step=0.01)
+                
+                description = st.text_area("Descripción", value=trans['description'])
+                
+                try:
+                    date_obj = datetime.strptime(trans['date'], '%Y-%m-%d')
+                except:
+                    date_obj = datetime.now()
+                
+                transaction_date = st.date_input(
+                    "Fecha", 
+                    value=date_obj,
+                    format="DD/MM/YYYY"
+                )
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("Actualizar Movimiento"):
+                        success = financial_manager.update_transaction(
+                            selected_index,
+                            'income' if transaction_type == "Ingreso" else 'expense',
+                            category,
+                            amount,
+                            description,
+                            transaction_date.strftime('%Y-%m-%d')
+                        )
+                        if success:
+                            st.success("Movimiento actualizado correctamente")
+                            st.experimental_rerun()
+                        else:
+                            st.error("Error al actualizar el movimiento")
+                
+                with col2:
+                    if st.button("Eliminar Movimiento", type="primary", help="Esta acción no se puede deshacer"):
+                        if st.confirm("¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer."):
+                            success = financial_manager.delete_transaction(selected_index)
+                            if success:
+                                st.success("Movimiento eliminado correctamente")
+                                st.experimental_rerun()
+                            else:
+                                st.error("Error al eliminar el movimiento")
+            else:
+                st.info("Selecciona un ID de movimiento para editar o eliminar")
         else:
             st.info("No se encontraron movimientos con los filtros aplicados")
 
