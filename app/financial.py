@@ -24,15 +24,22 @@ class FinancialManager:
                 'date': [], 'type': [], 'category': [],
                 'amount': [], 'description': []
             })
-        self.initial_balance = float(self.drive_manager.load_data('balance.csv').get('balance', 0))
+        balance_df = self.drive_manager.load_data('balance.csv')
+        if balance_df.empty:
+            self.initial_balance = 0.0
+        else:
+            self.initial_balance = float(balance_df['balance'].iloc[0])
 
     def save_data(self):
         self.drive_manager.save_data(self.transactions, 'transactions.csv')
         self.drive_manager.save_data({'balance': [self.initial_balance]}, 'balance.csv')
 
-    def add_transaction(self, transaction_type, category, amount, description):
+    def add_transaction(self, transaction_type, category, amount, description, date=None):
+        if date is None:
+            date = datetime.now().strftime('%Y-%m-%d')
+            
         new_transaction = pd.DataFrame({
-            'date': [datetime.now().strftime('%Y-%m-%d')],
+            'date': [date],
             'type': [transaction_type],
             'category': [category],
             'amount': [amount],
@@ -45,6 +52,10 @@ class FinancialManager:
         total_income = self.transactions[self.transactions['type'] == 'income']['amount'].sum()
         total_expenses = self.transactions[self.transactions['type'] == 'expense']['amount'].sum()
         return self.initial_balance + total_income - total_expenses
+        
+    def set_initial_balance(self, new_balance):
+        self.initial_balance = float(new_balance)
+        self.save_data()
 
     def create_summary_chart(self):
         fig = go.Figure()

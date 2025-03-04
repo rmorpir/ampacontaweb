@@ -9,7 +9,7 @@ import os
 class DriveManager:
     def __init__(self):
         self.SCOPES = ['https://www.googleapis.com/auth/drive.file']
-        self.FOLDER_ID = "127a8D2rw4SbucDdu-msPBQLlKWvraZZf"
+        self.FOLDER_ID = "1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23"
         self.credentials = self._get_credentials()
         self.use_local_storage = self.credentials is None
         

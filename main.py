@@ -24,7 +24,7 @@ else:
     st.sidebar.image("attached_assets/LogoAMPA.png", width=200)
     selected_option = st.sidebar.selectbox(
         "Menú",
-        ["Inicio", "Registrar Movimiento", "Buscar Movimientos", "Generar Informe"]
+        ["Inicio", "Registrar Movimiento", "Buscar Movimientos", "Generar Informe", "Configuración"]
     )
 
     if st.sidebar.button("Cerrar Sesión"):
@@ -55,28 +55,62 @@ else:
         category = st.selectbox("Categoría", categories)
         amount = st.number_input("Cantidad (€)", min_value=0.0, step=0.01)
         description = st.text_area("Descripción")
+        
+        # Añadir selector de fecha
+        transaction_date = st.date_input(
+            "Fecha", 
+            value=datetime.now(),
+            format="DD/MM/YYYY"
+        )
 
         if st.button("Registrar"):
             financial_manager.add_transaction(
                 'income' if transaction_type == "Ingreso" else 'expense',
                 category,
                 amount,
-                description
+                description,
+                transaction_date.strftime('%Y-%m-%d')
             )
             st.success("Movimiento registrado correctamente")
 
     elif selected_option == "Buscar Movimientos":
         st.title("Buscar Movimientos")
 
-        search_term = st.text_input("Buscar por descripción")
-
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            search_term = st.text_input("Buscar por descripción")
+        
+        with col2:
+            # Opciones de filtrado por fecha
+            use_date_filter = st.checkbox("Filtrar por fecha")
+            
+        if use_date_filter:
+            date_col1, date_col2 = st.columns(2)
+            with date_col1:
+                start_date = st.date_input("Fecha inicial", datetime.now() - datetime.timedelta(days=30))
+            with date_col2:
+                end_date = st.date_input("Fecha final", datetime.now())
+                
+        # Aplicar filtros
+        filtered_data = financial_manager.transactions
+        
         if search_term:
-            filtered_data = financial_manager.transactions[
-                financial_manager.transactions['description'].str.contains(search_term, case=False)
+            filtered_data = filtered_data[
+                filtered_data['description'].str.contains(search_term, case=False)
             ]
-            st.dataframe(filtered_data)
+            
+        if use_date_filter:
+            filtered_data = filtered_data[
+                (filtered_data['date'] >= start_date.strftime('%Y-%m-%d')) & 
+                (filtered_data['date'] <= end_date.strftime('%Y-%m-%d'))
+            ]
+            
+        # Mostrar datos con formato
+        if not filtered_data.empty:
+            st.dataframe(filtered_data.sort_values(by='date', ascending=False))
         else:
-            st.dataframe(financial_manager.transactions)
+            st.info("No se encontraron movimientos con los filtros aplicados")
 
     elif selected_option == "Generar Informe":
         st.title("Generar Informe")
@@ -94,3 +128,17 @@ else:
                 file_name=f"informe_ampa_{datetime.now().strftime('%Y%m%d')}.pdf",
                 mime="application/pdf"
             )
+    
+    elif selected_option == "Configuración":
+        st.title("Configuración")
+        
+        # Saldo inicial
+        st.subheader("Saldo Inicial")
+        current_initial_balance = financial_manager.initial_balance
+        new_initial_balance = st.number_input("Saldo Inicial (€)", 
+                                            value=float(current_initial_balance), 
+                                            step=0.01)
+        
+        if st.button("Actualizar Saldo Inicial"):
+            financial_manager.set_initial_balance(new_initial_balance)
+            st.success("Saldo inicial actualizado correctamente")
