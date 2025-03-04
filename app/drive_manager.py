@@ -8,7 +8,10 @@ import os
 
 class DriveManager:
     def __init__(self):
-        self.shared_folder_id = "1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23"  # ID de la carpeta compartida
+        # Nota: Este es el ID de la carpeta donde se guardarán los archivos
+        # El ID anterior (1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23) parece ser un archivo, no una carpeta
+        # Debes usar el ID de la carpeta en Google Drive
+        self.shared_folder_id = "root"  # Usar "root" temporalmente o reemplazar con el ID correcto de la carpeta
         self.local_data_dir = "data"
 
         try:
@@ -147,4 +150,41 @@ class DriveManager:
                 print(f"✅ Archivo {file_name} guardado correctamente en Google Drive (Carpeta ID: {self.shared_folder_id})")
                 print(f"   También se ha guardado localmente en: {local_path}")
             except Exception as e:
-                print(f"❌ Error al guardar en Google Drive: {str(e)}. Datos guardados localmente en: {local_path}")
+                error_message = f"❌ Error al guardar en Google Drive: {str(e)}"
+                print(error_message)
+                print(f"   Datos guardados localmente en: {local_path}")
+                print(f"   ID de carpeta utilizado: {self.shared_folder_id}")
+                # Intentar verificar si el ID corresponde a una carpeta
+                try:
+                    file_metadata = self.service.files().get(fileId=self.shared_folder_id, fields='mimeType').execute()
+                    is_folder = file_metadata.get('mimeType') == 'application/vnd.google-apps.folder'
+                    print(f"   ¿El ID corresponde a una carpeta? {'Sí' if is_folder else 'No'}")
+
+
+    def list_available_folders(self):
+        """Listar carpetas disponibles en Google Drive para ayudar a identificar el ID correcto"""
+        if not self.service:
+            print("No hay conexión a Google Drive.")
+            return []
+        
+        try:
+            results = self.service.files().list(
+                q="mimeType='application/vnd.google-apps.folder' and trashed=false",
+                fields="files(id, name)"
+            ).execute()
+            
+            folders = results.get('files', [])
+            if folders:
+                print("Carpetas disponibles en Google Drive:")
+                for folder in folders:
+                    print(f"  - Nombre: {folder['name']}, ID: {folder['id']}")
+            else:
+                print("No se encontraron carpetas en Google Drive.")
+            
+            return folders
+        except Exception as e:
+            print(f"Error al listar carpetas en Drive: {str(e)}")
+            return []
+
+                except Exception as folder_error:
+                    print(f"   No se pudo verificar el ID de la carpeta: {str(folder_error)}")
