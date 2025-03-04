@@ -8,7 +8,7 @@ import os
 
 class DriveManager:
     def __init__(self):
-        self.shared_folder_id = "TU_ID_DE_CARPETA"  # ID de la carpeta compartida
+        self.shared_folder_id = "1DcKpzwRBfnIXqOTR71OpO4HN7LhOyA23"  # ID de la carpeta compartida
         self.local_data_dir = "data"
 
         try:
