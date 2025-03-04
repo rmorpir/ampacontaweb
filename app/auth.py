@@ -49,4 +49,4 @@ def login():
 
 def logout():
     st.session_state.authenticated = False
-    st.rerun()n()
+    st.rerun()
