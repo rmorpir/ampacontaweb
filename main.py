@@ -183,7 +183,7 @@ else:
                         )
                         if success:
                             st.success("Movimiento actualizado correctamente")
-                            st.experimental_rerun()
+                            st.rerun()
                         else:
                             st.error("Error al actualizar el movimiento")
                 
@@ -193,7 +193,7 @@ else:
                             success = financial_manager.delete_transaction(selected_index)
                             if success:
                                 st.success("Movimiento eliminado correctamente")
-                                st.experimental_rerun()
+                                st.rerun()
                             else:
                                 st.error("Error al eliminar el movimiento")
             else:
