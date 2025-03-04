@@ -3,6 +3,7 @@ from app.auth import init_auth, login, logout
 from app.drive_manager import DriveManager
 from app.financial import FinancialManager
 from app.pdf_generator import PDFGenerator
+from app.backup_manager import BackupManager
 from datetime import datetime
 import io
 
@@ -19,7 +20,8 @@ else:
     drive_manager = DriveManager()
     financial_manager = FinancialManager(drive_manager)
     pdf_generator = PDFGenerator()
-    
+    backup_manager = BackupManager(drive_manager)
+
     # Show storage status
     if drive_manager.service:
         st.sidebar.success("✅ Conectado a Google Drive")
@@ -253,46 +255,103 @@ else:
     elif selected_option == "Configuración":
         st.title("Configuración")
 
-        # Sección de Google Drive
-        st.subheader("Conexión a Google Drive")
+        # Pestañas de configuración
+        tab1, tab2, tab3 = st.tabs(["Google Drive", "Saldo Inicial", "Copias de Seguridad"])
 
-        # Mostrar estado de la conexión
-        if drive_manager.service:
-            st.success("✅ Conectado a Google Drive")
+        with tab1:
+            st.subheader("Conexión a Google Drive")
 
-            # Mostrar ID de la carpeta actual
-            st.info(f"ID de carpeta utilizado actualmente: {drive_manager.shared_folder_id}")
+            # Mostrar estado de la conexión
+            if drive_manager.service:
+                st.success("✅ Conectado a Google Drive")
 
-            # Botón para mostrar carpetas disponibles
-            if st.button("Explorar carpetas disponibles"):
-                folders = drive_manager.list_available_folders()
-                if folders:
-                    st.write("Carpetas disponibles:")
-                    for folder in folders:
-                        st.write(f"- **{folder['name']}**: `{folder['id']}`")
-                else:
-                    st.warning("No se encontraron carpetas o no hay permiso para listarlas")
+                # Mostrar ID de la carpeta actual
+                st.info(f"ID de carpeta utilizado actualmente: {drive_manager.shared_folder_id}")
 
-            # Campo para actualizar ID de carpeta
-            new_folder_id = st.text_input("Actualizar ID de carpeta", value=drive_manager.shared_folder_id)
-            if st.button("Guardar nuevo ID de carpeta"):
-                if new_folder_id and new_folder_id != drive_manager.shared_folder_id:
-                    drive_manager.shared_folder_id = new_folder_id
-                    st.success(f"ID de carpeta actualizado a: {new_folder_id}")
-                    st.info("Recuerde reiniciar la aplicación para que los cambios surtan efecto")
-        else:
-            st.error("❌ No hay conexión a Google Drive")
-            st.info("Para conectar con Google Drive, necesita configurar las credenciales adecuadas en las variables de entorno")
+                # Botón para mostrar carpetas disponibles
+                if st.button("Explorar carpetas disponibles"):
+                    folders = drive_manager.list_available_folders()
+                    if folders:
+                        st.write("Carpetas disponibles:")
+                        for folder in folders:
+                            st.write(f"- **{folder['name']}**: `{folder['id']}`")
+                    else:
+                        st.warning("No se encontraron carpetas o no hay permiso para listarlas")
 
-        st.divider()
+                # Campo para actualizar ID de carpeta
+                new_folder_id = st.text_input("Actualizar ID de carpeta", value=drive_manager.shared_folder_id)
+                if st.button("Guardar nuevo ID de carpeta"):
+                    if new_folder_id and new_folder_id != drive_manager.shared_folder_id:
+                        drive_manager.shared_folder_id = new_folder_id
+                        st.success(f"ID de carpeta actualizado a: {new_folder_id}")
+                        st.info("Recuerde reiniciar la aplicación para que los cambios surtan efecto")
+            else:
+                st.error("❌ No hay conexión a Google Drive")
+                st.info("Para conectar con Google Drive, necesita configurar las credenciales adecuadas en las variables de entorno")
 
-        # Saldo inicial
-        st.subheader("Saldo Inicial")
-        current_initial_balance = financial_manager.initial_balance
-        new_initial_balance = st.number_input("Saldo Inicial (€)", 
-                                            value=float(current_initial_balance), 
-                                            step=0.01)
+        with tab2:
+            st.subheader("Saldo Inicial")
+            current_initial_balance = financial_manager.initial_balance
+            new_initial_balance = st.number_input("Saldo Inicial (€)", 
+                                                value=float(current_initial_balance), 
+                                                step=0.01)
 
-        if st.button("Actualizar Saldo Inicial"):
-            financial_manager.set_initial_balance(new_initial_balance)
-            st.success("Saldo inicial actualizado correctamente")
+            if st.button("Actualizar Saldo Inicial"):
+                financial_manager.set_initial_balance(new_initial_balance)
+                st.success("Saldo inicial actualizado correctamente")
+
+        with tab3:
+            st.subheader("Copias de Seguridad")
+
+            # Crear backup manual
+            if st.button("Crear Copia de Seguridad"):
+                with st.spinner("Creando copia de seguridad..."):
+                    backup_result = backup_manager.create_backup()
+                    if backup_result['status'] == 'success':
+                        st.success("Copia de seguridad creada correctamente")
+                        for file_info in backup_result['files']:
+                            if file_info['drive_sync']:
+                                st.info(f"✅ {file_info['name']}: Guardado en local y Google Drive")
+                            else:
+                                st.warning(f"⚠️ {file_info['name']}: Guardado solo localmente")
+                    else:
+                        st.error(f"Error al crear la copia de seguridad: {backup_result.get('error', 'Error desconocido')}")
+
+            # Listar backups existentes
+            st.subheader("Copias de Seguridad Disponibles")
+            backups = backup_manager.list_backups()
+
+            if backups:
+                for backup in backups:
+                    col1, col2, col3 = st.columns([2,2,1])
+                    with col1:
+                        st.text(backup['filename'])
+                    with col2:
+                        st.text(backup['date'].strftime('%d/%m/%Y %H:%M:%S'))
+                    with col3:
+                        if st.button("Restaurar", key=backup['filename']):
+                            if st.confirm("¿Está seguro de que desea restaurar esta copia de seguridad? Los datos actuales serán reemplazados."):
+                                try:
+                                    backup_manager.restore_backup(backup['filename'])
+                                    st.success("Copia de seguridad restaurada correctamente")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error al restaurar: {str(e)}")
+            else:
+                st.info("No hay copias de seguridad disponibles")
+
+            # Configuración de backup automático
+            st.subheader("Configuración de Backup Automático")
+            if 'backup_interval' not in st.session_state:
+                st.session_state.backup_interval = 'daily'
+
+            backup_interval = st.radio(
+                "Frecuencia de copias de seguridad automáticas",
+                options=['daily', 'weekly', 'monthly'],
+                format_func=lambda x: {
+                    'daily': 'Diaria',
+                    'weekly': 'Semanal',
+                    'monthly': 'Mensual'
+                }[x],
+                key='backup_interval'
+            )
