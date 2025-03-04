@@ -252,17 +252,17 @@ else:
     
     elif selected_option == "Configuración":
         st.title("Configuración")
-        
+
         # Sección de Google Drive
         st.subheader("Conexión a Google Drive")
-        
+
         # Mostrar estado de la conexión
         if drive_manager.service:
             st.success("✅ Conectado a Google Drive")
-            
+
             # Mostrar ID de la carpeta actual
             st.info(f"ID de carpeta utilizado actualmente: {drive_manager.shared_folder_id}")
-            
+
             # Botón para mostrar carpetas disponibles
             if st.button("Explorar carpetas disponibles"):
                 folders = drive_manager.list_available_folders()
@@ -272,27 +272,27 @@ else:
                         st.write(f"- **{folder['name']}**: `{folder['id']}`")
                 else:
                     st.warning("No se encontraron carpetas o no hay permiso para listarlas")
-            
+
             # Campo para actualizar ID de carpeta
             new_folder_id = st.text_input("Actualizar ID de carpeta", value=drive_manager.shared_folder_id)
             if st.button("Guardar nuevo ID de carpeta"):
                 if new_folder_id and new_folder_id != drive_manager.shared_folder_id:
                     drive_manager.shared_folder_id = new_folder_id
                     st.success(f"ID de carpeta actualizado a: {new_folder_id}")
-                    st.info("Recuerda reiniciar la aplicación para que los cambios surtan efecto")
+                    st.info("Recuerde reiniciar la aplicación para que los cambios surtan efecto")
         else:
             st.error("❌ No hay conexión a Google Drive")
-            st.info("Para conectar con Google Drive, necesitas configurar las credenciales adecuadas en las variables de entorno")
-        
+            st.info("Para conectar con Google Drive, necesita configurar las credenciales adecuadas en las variables de entorno")
+
         st.divider()
-        
+
         # Saldo inicial
         st.subheader("Saldo Inicial")
         current_initial_balance = financial_manager.initial_balance
         new_initial_balance = st.number_input("Saldo Inicial (€)", 
                                             value=float(current_initial_balance), 
                                             step=0.01)
-        
+
         if st.button("Actualizar Saldo Inicial"):
             financial_manager.set_initial_balance(new_initial_balance)
             st.success("Saldo inicial actualizado correctamente")
