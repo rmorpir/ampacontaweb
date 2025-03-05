@@ -334,18 +334,18 @@ else:
                            st.warning("¿Está seguro de que desea restaurar esta copia de seguridad? Los datos actuales serán reemplazados.")
     
     # Usar un checkbox para confirmar la acción
-    if st.checkbox("Sí, estoy seguro de que quiero restaurar esta copia de seguridad.", key=f"confirm_{backup['filename']}"):
-        try:
-            # Ejecutar la restauración
-            backup_manager.restore_backup(backup['filename'])
-            st.success("Copia de seguridad restaurada correctamente")
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error al restaurar: {str(e)}")
-    else:
-                    st.warning("Debes confirmar la acción para continuar.")
-else:
-    st.info("No hay copias de seguridad disponibles")
+                           if st.checkbox("Sí, estoy seguro de que quiero restaurar esta copia de seguridad.", key=f"confirm_{backup['filename']}"):
+                               try:
+                                   # Ejecutar la restauración
+                                   backup_manager.restore_backup(backup['filename'])
+                                   st.success("Copia de seguridad restaurada correctamente")
+                                   st.rerun()
+                               except Exception as e:
+                                   st.error(f"Error al restaurar: {str(e)}")
+                           else:
+                              st.warning("Debes confirmar la acción para continuar.")
+          else:
+              st.info("No hay copias de seguridad disponibles")
 
             # Configuración de backup automático
             st.subheader("Configuración de Backup Automático")
