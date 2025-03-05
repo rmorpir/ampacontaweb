@@ -191,7 +191,7 @@ else:
                 
                 with col2:
                     if st.button("Eliminar Movimiento", type="primary", help="Esta acción no se puede deshacer"):
-                        if st.confirm("¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer."):
+                        if st.warning("¿Estás seguro de que deseas eliminar este movimiento? Esta acción no se puede deshacer."):
                             success = financial_manager.delete_transaction(selected_index)
                             if success:
                                 st.success("Movimiento eliminado correctamente")
