@@ -332,7 +332,7 @@ else:
                         if st.button("Restaurar", key=backup['filename']):
                             if st.button("Restaurar", key=backup['filename']):
     # Mostrar un mensaje de advertencia
-    st.info("¿Está seguro de que desea restaurar esta copia de seguridad? Los datos actuales serán reemplazados.")
+   if st.warning("¿Está seguro de que desea restaurar esta copia de seguridad? Los datos actuales serán reemplazados.")
     
     # Usar un checkbox para confirmar la acción
     if st.checkbox("Sí, estoy seguro de que quiero restaurar esta copia de seguridad.", key=f"confirm_{backup['filename']}"):
