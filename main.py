@@ -330,9 +330,8 @@ else:
                         st.text(backup['date'].strftime('%d/%m/%Y %H:%M:%S'))
                     with col3:
                         if st.button("Restaurar", key=backup['filename']):
-                            if st.button("Restaurar", key=backup['filename']):
     # Mostrar un mensaje de advertencia
-   if st.warning("¿Está seguro de que desea restaurar esta copia de seguridad? Los datos actuales serán reemplazados.")
+   st.warning("¿Está seguro de que desea restaurar esta copia de seguridad? Los datos actuales serán reemplazados.")
     
     # Usar un checkbox para confirmar la acción
     if st.checkbox("Sí, estoy seguro de que quiero restaurar esta copia de seguridad.", key=f"confirm_{backup['filename']}"):
@@ -344,7 +343,9 @@ else:
         except Exception as e:
             st.error(f"Error al restaurar: {str(e)}")
     else:
-                st.info("No hay copias de seguridad disponibles")
+                    st.warning("Debes confirmar la acción para continuar.")
+else:
+    st.info("No hay copias de seguridad disponibles")
 
             # Configuración de backup automático
             st.subheader("Configuración de Backup Automático")
